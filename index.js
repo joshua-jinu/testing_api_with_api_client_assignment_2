@@ -1,10 +1,12 @@
 const express = require('express');
 const bodyParser = require('body-parser');
+const fs = require('fs');
 
 const app = express();
 app.use(bodyParser.json());
 
-let books = [];
+const datajson = fs.readFileSync('data.json');
+let books = JSON.parse(datajson);
 
 // Create a new book
 app.post('/books', (req, res) => {
@@ -20,11 +22,14 @@ app.post('/books', (req, res) => {
 
     const newBook = { book_id, title, author, genre, year, copies };
     books.push(newBook);
+    fs.writeFileSync('data.json', JSON.stringify(books, null, 2));
+
     res.status(201).json(newBook);
 });
 
 // Retrieve all books
 app.get('/books', (req, res) => {
+    console.log("GET request");
     res.status(200).json(books);
 });
 
@@ -49,20 +54,23 @@ app.put('/books/:id', (req, res) => {
 
     const updatedBook = { ...books[bookIndex], ...req.body };
     books[bookIndex] = updatedBook;
-
+    
+    fs.writeFileSync('data.json', JSON.stringify(books, null, 2));
+    
     res.status(200).json(updatedBook);
 });
 
 // Delete a book
 app.delete('/books/:id', (req, res) => {
     const bookIndex = books.findIndex(b => b.book_id === req.params.id);
-
+    
     if (bookIndex === -1) {
         return res.status(404).json({ error: 'Book not found.' });
     }
-
+    
     books.splice(bookIndex, 1);
-    res.status(200).json({ message: 'Book deleted successfully.' });
+    fs.writeFileSync('data.json', JSON.stringify(books, null, 2));
+    res.status(200).json({ message: `Book ${req.params.id} successfully.` });
 });
 
 // Start the server
